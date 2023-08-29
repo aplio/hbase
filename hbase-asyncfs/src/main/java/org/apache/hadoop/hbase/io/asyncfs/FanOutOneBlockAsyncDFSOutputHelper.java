@@ -61,6 +61,7 @@ import org.apache.hadoop.hdfs.DFSOutputStream;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.ClientProtocol;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
+import org.apache.hadoop.hdfs.protocol.DatanodeInfoWithStorage;
 import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
@@ -341,7 +342,7 @@ public final class FanOutOneBlockAsyncDFSOutputHelper {
     return PipelineAck.getStatusFromHeader(headerFlag);
   }
 
-  private static void processWriteBlockResponse(Channel channel, DatanodeInfo dnInfo,
+  private static void processWriteBlockResponse(Channel channel, DatanodeInfoWithStorage dnInfo,
     Promise<Channel> promise, int timeoutMs) {
     channel.pipeline().addLast(new IdleStateHandler(timeoutMs, 0, 0, TimeUnit.MILLISECONDS),
       new ProtobufVarint32FrameDecoder(),
@@ -415,7 +416,7 @@ public final class FanOutOneBlockAsyncDFSOutputHelper {
     safeWriteAndFlush(channel, buffer);
   }
 
-  private static void initialize(Configuration conf, Channel channel, DatanodeInfo dnInfo,
+  private static void initialize(Configuration conf, Channel channel, DatanodeInfoWithStorage dnInfo,
     StorageType storageType, OpWriteBlockProto.Builder writeBlockProtoBuilder, int timeoutMs,
     DFSClient client, Token<BlockTokenIdentifier> accessToken, Promise<Channel> promise)
     throws IOException {
@@ -441,7 +442,7 @@ public final class FanOutOneBlockAsyncDFSOutputHelper {
     BlockConstructionStage stage, DataChecksum summer, EventLoopGroup eventLoopGroup,
     Class<? extends Channel> channelClass) {
     StorageType[] storageTypes = locatedBlock.getStorageTypes();
-    DatanodeInfo[] datanodeInfos = locatedBlock.getLocations();
+    DatanodeInfoWithStorage[] datanodeInfos = locatedBlock.getLocations();
     boolean connectToDnViaHostname =
       conf.getBoolean(DFS_CLIENT_USE_DN_HOSTNAME, DFS_CLIENT_USE_DN_HOSTNAME_DEFAULT);
     int timeoutMs = conf.getInt(DFS_CLIENT_SOCKET_TIMEOUT_KEY, READ_TIMEOUT);
@@ -460,7 +461,7 @@ public final class FanOutOneBlockAsyncDFSOutputHelper {
         .setCachingStrategy(CachingStrategyProto.newBuilder().setDropBehind(true).build());
     List<Future<Channel>> futureList = new ArrayList<>(datanodeInfos.length);
     for (int i = 0; i < datanodeInfos.length; i++) {
-      DatanodeInfo dnInfo = datanodeInfos[i];
+      DatanodeInfoWithStorage dnInfo = datanodeInfos[i];
       StorageType storageType = storageTypes[i];
       Promise<Channel> promise = eventLoopGroup.next().newPromise();
       futureList.add(promise);

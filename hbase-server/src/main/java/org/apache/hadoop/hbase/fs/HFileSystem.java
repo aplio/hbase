@@ -43,6 +43,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.protocol.ClientProtocol;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
+import org.apache.hadoop.hdfs.protocol.DatanodeInfoWithStorage;
 import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
@@ -425,13 +426,13 @@ public class HFileSystem extends FilterFileSystem {
 
       // Just check for all blocks
       for (LocatedBlock lb : lbs.getLocatedBlocks()) {
-        DatanodeInfo[] dnis = lb.getLocations();
+        DatanodeInfoWithStorage[] dnis = lb.getLocations();
         if (dnis != null && dnis.length > 1) {
           boolean found = false;
           for (int i = 0; i < dnis.length - 1 && !found; i++) {
             if (hostName.equals(dnis[i].getHostName())) {
               // advance the other locations by one and put this one at the last place.
-              DatanodeInfo toLast = dnis[i];
+              DatanodeInfoWithStorage toLast = dnis[i];
               System.arraycopy(dnis, i + 1, dnis, i, dnis.length - i - 1);
               dnis[dnis.length - 1] = toLast;
               found = true;
